@@ -58,6 +58,8 @@ export default {
     createRoom() {
       axios.post("http://localhost:8080/api/room", {
         name: this.user.name
+      }, {
+        withCredentials: true
       }).then(res => {
         console.log(res.data.data)
         this.room = {
@@ -108,6 +110,12 @@ export default {
         }));
         room.newMessage = "";
       }
+    },
+    getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2)
+        return parts.pop().split(";").shift();
     },
     joinRoom() {
 

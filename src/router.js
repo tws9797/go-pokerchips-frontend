@@ -12,7 +12,7 @@ const routes = [
         component: () => import("./components/JoinRoom")
     },
     {
-        path: "/join/:id",
+        path: "/:uri",
         name: "inRoom",
         component: () => import("./components/InRoom")
     }

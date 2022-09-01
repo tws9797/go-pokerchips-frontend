@@ -14,7 +14,7 @@
   margin-left: auto;
   display: flex;
   justify-content: center;
-  margin-top: 50%;
+  margin-top: 200px;
 }
 
 </style>
