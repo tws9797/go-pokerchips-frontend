@@ -17,13 +17,14 @@
               class="d-flex justify-content-start mb-4">
             <div class="msg_cotainer">
               {{message.message}}
-              <span class="msg_name" v-if="message.sender">{{message.sender.name}}</span>
+              <br />
+              <span v-if="message.pot">Pot Available: {{message.pot}}</span>
             </div>
           </div>
         </div>
 
         <div class="card-footer" style="text-align: center;">
-          <p>Your Chips: <span class="col-12" v-text="potAvailable"></span></p>
+          <p>Your Chips: <span class="col-12" v-text="currentChips"></span></p>
           <div class="row">
             <button type="button" class="col-6 btn">Bet</button>
             <button type="button" class="col-6 btn">Take</button>
@@ -33,11 +34,11 @@
             <input
                 type="range"
                 min="0"
-                max="50"
-                v-model="potAvailable"
+                :max="currentChips"
+                v-model="bet"
             />
-            <span class="col-12" v-text="potAvailable"></span>
-            <button type="button" class="btn btn-success">Bet</button>
+            <span class="col-12" v-text="bet"></span>
+            <button type="button" class="btn btn-success" @click="addPot">Bet</button>
           </div>
 
         </div>
@@ -56,6 +57,8 @@
 </style>
 
 <script>
+import axios from 'axios';
+
 export default {
   data() {
     return {
@@ -63,13 +66,16 @@ export default {
       serverUrl: "ws://localhost:8080/ws",
       roomInput: null,
       room: {
+        uri: "",
         messages: [],
       },
       pot: 0,
-      potAvailable: 0,
+      bet: 0,
+      currentChips: 0,
       user: {
         name: ""
       },
+      records: null
     }
   },
   methods: {
@@ -88,22 +94,52 @@ export default {
       console.log("connected to WS!");
     },
     handleNewMessage(event) {
-      console.log(event);
       let data = event.data;
       data = data.split(/\r?\n/);
       console.log(data);
       for (let i = 0; i < data.length; i++) {
-        let msg = JSON.parse(data[i]);
-        console.log(msg)
-        // display the message in the correct room.
-        this.pot = msg.pot;
-        this.room.messages.push(msg);
+        const msg = JSON.parse(data[i]);
+
+        console.log(msg);
+        const action = msg.action;
+
+        switch(action) {
+          case "send-message":
+            this.room.messages.push(msg);
+            break;
+          case "update-pot":
+            this.pot = msg.pot;
+            if(this.user.name === msg.sender) {
+              this.currentChips = msg.currentChips;
+            }
+            this.room.messages.push(msg);
+            break;
+          case "join-room":
+            this.user.name = msg.sender;
+            this.currentChips = this.records[this.user.name];
+            break;
+        }
       }
+    },
+    addPot() {
+      console.log('addPot')
+      this.ws.send(JSON.stringify({ action: 'add-pot', pot: parseInt(this.bet) }));
+    },
+    retrievePot() {
+      console.log('retrievePot')
+      this.ws.send(JSON.stringify({ action: 'retrieve-pot', pot: parseInt(this.bet) }));
     },
   },
   mounted: function() {
     if(this.getCookie("session")) {
-      this.connectToWebsocket()
+      axios.get("http://localhost:8080/api/room/get", {
+        withCredentials: true
+      }).then(res => {
+        this.room.uri = res.data.data.uri;
+        this.records = res.data.data.record;
+        this.pot = res.data.data.pot;
+        this.connectToWebsocket();
+      });
     } else {
       this.$router.push({
         name: "joinRoom"
