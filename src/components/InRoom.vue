@@ -1,21 +1,27 @@
 
 <!-- Register Template -->
 <template>
-  <div class="container">
+  <div class="container-sm">
 
     <div class="chat" v-if="room">
       <div class="card">
-        <div class="row">
-          <button type="button" class="col-6 btn">Activity Feeds</button>
-          <button type="button" class="col-6 btn">Chip Counts</button>
+        <div style="display: flex;flex-wrap: wrap;text-align: center;">
+            <div id="card-activities" class="col-6 p-1 card-btn">
+              <div class="mt-2">Activity Feeds</div>
+              <hr id="divider-activities" v-bind:class="isActivityFeeds?'':'d-none'" class="solid divider">
+            </div>
+            <div id="card-chips" class="col-6 p-1 card-btn">
+              <div class="mt-2">Chip Counts</div>
+              <hr v-bind:class="isChipCounts?'':'d-none'" class="solid divider">
+            </div>
         </div>
 
-        <div class="card-body msg_card_body">
+        <div id="msg-card-body" class="card-body">
           <div
               v-for="(message, key) in room.messages"
               :key="key"
               class="d-flex justify-content-start mb-4">
-            <div class="msg_cotainer">
+            <div>
               {{message.message}}
               <br />
               <span v-if="message.pot">Pot Available: {{message.pot}}</span>
@@ -25,21 +31,40 @@
 
         <div class="card-footer" style="text-align: center;">
           <p>Your Chips: <span class="col-12" v-text="currentChips"></span></p>
-          <div class="row">
-            <button type="button" class="col-6 btn">Bet</button>
-            <button type="button" class="col-6 btn">Take</button>
+
+          <div style="display: flex;flex-wrap: wrap;text-align: center;">
+            <div id="card-activities" class="col-6 p-1 card-btn" @click="isBet=true; isTake=false">
+              <div>Bet</div>
+              <hr id="divider-activities" v-bind:class="isBet?'':'d-none'" class="solid divider">
+            </div>
+            <div id="card-chips" class="col-6 p-1 card-btn"  @click="isTake=true; isBet=false">
+              <div>Take</div>
+              <hr v-bind:class="isTake?'':'d-none'" class="solid divider">
+            </div>
           </div>
 
-          <div class="input-group" style="justify-content: center">
+          <div id="card-bet" class="input-group" style="justify-content: center" v-if="isBet">
             <input
                 type="range"
                 min="0"
                 :max="currentChips"
                 v-model="bet"
             />
-            <span class="col-12" v-text="bet"></span>
-            <button type="button" class="btn btn-success" @click="addPot">Bet</button>
+            <span class="col-12 mt-2" v-text="bet"></span>
+            <button :class="{'disabled': currentChips === 0 }" type="button" class="mt-3 btn btn-block btn-success" @click="addPot">Bet</button>
           </div>
+
+          <div id="card-take" class="input-group" style="justify-content: center" v-if="isTake">
+            <input
+                type="range"
+                min="0"
+                :max="pot"
+                v-model="take"
+            />
+            <span class="col-12 mt-2" v-text="take"></span>
+            <button :class="{'disabled': pot === 0 }" type="button" class="mt-3 btn btn-block btn-success" @click="retrievePot">Take</button>
+          </div>
+
 
         </div>
       </div>
@@ -54,6 +79,23 @@
   height: 500px;
   border-radius: 15px;
 }
+.divider {
+  width:50%;
+  margin-top:0.5rem;
+  margin-bottom:0.5rem;
+}
+#msg-card-body{
+  overflow-y: auto;
+  max-height: 600px;
+}
+#card-activities:hover hr, #card-chips:hover hr {
+  display: block !important;
+}
+
+.card-btn:hover {
+  cursor: pointer;
+}
+
 </style>
 
 <script>
@@ -64,6 +106,10 @@ export default {
     return {
       ws: null,
       serverUrl: "ws://localhost:8080/ws",
+      isActivityFeeds: true,
+      isChipCounts: false,
+      isBet: true,
+      isTake: false,
       roomInput: null,
       room: {
         uri: "",
@@ -71,6 +117,7 @@ export default {
       },
       pot: 0,
       bet: 0,
+      take: 0,
       currentChips: 0,
       user: {
         name: ""
@@ -108,9 +155,11 @@ export default {
             this.room.messages.push(msg);
             break;
           case "update-pot":
+            this.bet = 0;
             this.pot = msg.pot;
             if(this.user.name === msg.sender) {
               this.currentChips = msg.currentChips;
+
             }
             this.room.messages.push(msg);
             break;

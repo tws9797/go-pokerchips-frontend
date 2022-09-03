@@ -15,9 +15,7 @@
           </div>
         </div>
       <span>
-        <u>
-          <router-link to="/join" style="float: right;margin: 5px;">Join Room</router-link>
-        </u>
+          <router-link to="/join" style="float: right;margin: 5px;">Join an existing room.</router-link>
       </span>
     </div>
   </div>
