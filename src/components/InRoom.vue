@@ -2,6 +2,7 @@
   <div class="container-sm">
 
     <div class="chat" v-if="room">
+      <p style="text-align: center;">Room ID: {{room.uri}}</p>
       <div class="card">
         <div style="display: flex;flex-wrap: wrap;text-align: center;">
             <div id="card-activities" class="col-6 p-1 card-btn">
@@ -60,7 +61,7 @@
                 v-model="take"
             />
             <span class="col-12 mt-2" v-text="take"></span>
-            <button :class="{'disabled': room.pot === 0 }" type="button" class="mt-3 btn btn-block btn-success" @click="retrievePot">Take</button>
+            <button :class="{'disabled': room.pot === 0 }" type="button" class="mt-3 btn btn-block btn-success" @click="takePot">Take</button>
           </div>
 
 
@@ -153,6 +154,7 @@ export default {
             break;
           case "update-pot":
             this.bet = 0;
+            this.take = 0;
             this.room.pot = msg.pot;
             if(this.user.name === msg.sender) {
               this.user.currentChips = msg.currentChips;
@@ -171,9 +173,9 @@ export default {
       console.log('addPot')
       this.ws.send(JSON.stringify({ action: 'add-pot', pot: parseInt(this.bet) }));
     },
-    retrievePot() {
-      console.log('retrievePot')
-      this.ws.send(JSON.stringify({ action: 'retrieve-pot', pot: parseInt(this.bet) }));
+    takePot() {
+      console.log('takePot')
+      this.ws.send(JSON.stringify({ action: 'take-pot', pot: parseInt(this.take) }));
     },
   },
   mounted: function() {
