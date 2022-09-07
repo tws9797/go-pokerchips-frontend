@@ -5,17 +5,17 @@
       <p style="text-align: center;">Room ID: {{room.uri}}</p>
       <div class="card">
         <div style="display: flex;flex-wrap: wrap;text-align: center;">
-            <div id="card-activities" class="col-6 p-1 card-btn">
+            <div id="card-activities" class="col-6 p-1 card-btn" @click="isActivityFeeds=true; isChipCounts=false;">
               <div class="mt-2">Activity Feeds</div>
               <hr id="divider-activities" v-bind:class="isActivityFeeds?'':'d-none'" class="solid divider">
             </div>
-            <div id="card-chips" class="col-6 p-1 card-btn">
+            <div id="card-chips" class="col-6 p-1 card-btn" @click="this.getLatestRecords();">
               <div class="mt-2">Chip Counts</div>
               <hr v-bind:class="isChipCounts?'':'d-none'" class="solid divider">
             </div>
         </div>
 
-        <div id="msg-card-body" class="card-body">
+        <div v-if="isActivityFeeds" id="msg-card-body" class="card-body">
           <div
               v-for="(message, key) in room.messages"
               :key="key"
@@ -24,6 +24,18 @@
               {{message.message}}
               <br />
               <span v-if="message.pot">Pot Available: {{message.pot}}</span>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="isChipCounts" id="chips-count-card-body" class="card-body">
+          <div
+              v-for="(chips, name) in records"
+              :key="name"
+              class="d-flex justify-content-start mb-4">
+            <div>
+              {{name}}: {{chips}}
+              <br />
             </div>
           </div>
         </div>
@@ -148,6 +160,10 @@ export default {
         console.log(msg);
         const action = msg.action;
 
+        if(this.isChipCounts) {
+          this.getLatestRecords();
+        }
+
         switch(action) {
           case "send-message":
             this.room.messages.push(msg);
@@ -158,7 +174,6 @@ export default {
             this.room.pot = msg.pot;
             if(this.user.name === msg.sender) {
               this.user.currentChips = msg.currentChips;
-
             }
             this.room.messages.push(msg);
             break;
@@ -177,22 +192,39 @@ export default {
       console.log('takePot')
       this.ws.send(JSON.stringify({ action: 'take-pot', pot: parseInt(this.take) }));
     },
+    initiateRoom() {
+      if(this.getCookie("session")) {
+        axios.get("http://localhost:8080/api/room/get", {
+          withCredentials: true
+        }).then(res => {
+          this.room.uri = res.data.data.uri;
+          this.records = res.data.data.record;
+          this.room.pot = res.data.data.pot;
+          this.connectToWebsocket();
+        });
+      } else {
+        this.$router.push({
+          name: "joinRoom"
+        });
+      }
+    },
+    getLatestRecords() {
+      if(this.getCookie("session")) {
+        axios.get("http://localhost:8080/api/room/get", {
+          withCredentials: true
+        }).then(res => {
+          this.isActivityFeeds = false;
+          this.isChipCounts = true;
+          this.records = res.data.data.record;
+          console.log(this.records);
+        });
+      } else {
+        alert("Please refresh the page. There's something wrong.")
+      }
+    }
   },
   mounted: function() {
-    if(this.getCookie("session")) {
-      axios.get("http://localhost:8080/api/room/get", {
-        withCredentials: true
-      }).then(res => {
-        this.room.uri = res.data.data.uri;
-        this.records = res.data.data.record;
-        this.room.pot = res.data.data.pot;
-        this.connectToWebsocket();
-      });
-    } else {
-      this.$router.push({
-        name: "joinRoom"
-      });
-    }
+    this.initiateRoom();
   }
 }
 </script>
