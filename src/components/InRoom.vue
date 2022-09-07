@@ -1,5 +1,3 @@
-
-<!-- Register Template -->
 <template>
   <div class="container-sm">
 
@@ -30,7 +28,7 @@
         </div>
 
         <div class="card-footer" style="text-align: center;">
-          <p>Your Chips: <span class="col-12" v-text="currentChips"></span></p>
+          <p>Your Chips: <span class="col-12" v-text="user.currentChips"></span></p>
 
           <div style="display: flex;flex-wrap: wrap;text-align: center;">
             <div id="card-activities" class="col-6 p-1 card-btn" @click="isBet=true; isTake=false">
@@ -47,22 +45,22 @@
             <input
                 type="range"
                 min="0"
-                :max="currentChips"
+                :max="user.currentChips"
                 v-model="bet"
             />
             <span class="col-12 mt-2" v-text="bet"></span>
-            <button :class="{'disabled': currentChips === 0 }" type="button" class="mt-3 btn btn-block btn-success" @click="addPot">Bet</button>
+            <button :class="{'disabled': user.currentChips === 0 }" type="button" class="mt-3 btn btn-block btn-success" @click="addPot">Bet</button>
           </div>
 
           <div id="card-take" class="input-group" style="justify-content: center" v-if="isTake">
             <input
                 type="range"
                 min="0"
-                :max="pot"
+                :max="room.pot"
                 v-model="take"
             />
             <span class="col-12 mt-2" v-text="take"></span>
-            <button :class="{'disabled': pot === 0 }" type="button" class="mt-3 btn btn-block btn-success" @click="retrievePot">Take</button>
+            <button :class="{'disabled': room.pot === 0 }" type="button" class="mt-3 btn btn-block btn-success" @click="retrievePot">Take</button>
           </div>
 
 
@@ -110,18 +108,17 @@ export default {
       isChipCounts: false,
       isBet: true,
       isTake: false,
-      roomInput: null,
+      user: {
+        name: "",
+        currentChips: 0,
+      },
       room: {
         uri: "",
         messages: [],
+        pot: 0,
       },
-      pot: 0,
       bet: 0,
       take: 0,
-      currentChips: 0,
-      user: {
-        name: ""
-      },
       records: null
     }
   },
@@ -156,16 +153,16 @@ export default {
             break;
           case "update-pot":
             this.bet = 0;
-            this.pot = msg.pot;
+            this.room.pot = msg.pot;
             if(this.user.name === msg.sender) {
-              this.currentChips = msg.currentChips;
+              this.user.currentChips = msg.currentChips;
 
             }
             this.room.messages.push(msg);
             break;
           case "join-room":
             this.user.name = msg.sender;
-            this.currentChips = this.records[this.user.name];
+            this.user.currentChips = this.records[this.user.name];
             break;
         }
       }
@@ -186,7 +183,7 @@ export default {
       }).then(res => {
         this.room.uri = res.data.data.uri;
         this.records = res.data.data.record;
-        this.pot = res.data.data.pot;
+        this.room.pot = res.data.data.pot;
         this.connectToWebsocket();
       });
     } else {
