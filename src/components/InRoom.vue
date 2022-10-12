@@ -15,9 +15,7 @@
             </div>
         </div>
 
-        <div v-if="isActivityFeeds" id="msg-card-body" class="card-body" style="  display: flex;
-  flex-direction: column-reverse;
-">
+        <div v-if="isActivityFeeds" id="msg-card-body" class="card-body" style="  display: flex; flex-direction: column-reverse;">
           <div>
             <div
                 v-for="(message, key) in room.messages"
@@ -26,7 +24,7 @@
               <div>
                 {{message.message}}
                 <br />
-                <span v-if="message.pot">Pot Available: {{message.pot}}</span>
+                <span v-if="message.action==='update-pot'">Pot Available: {{message.pot}}</span>
               </div>
             </div>
 
