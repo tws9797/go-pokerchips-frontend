@@ -15,16 +15,21 @@
             </div>
         </div>
 
-        <div v-if="isActivityFeeds" id="msg-card-body" class="card-body">
-          <div
-              v-for="(message, key) in room.messages"
-              :key="key"
-              class="d-flex justify-content-start mb-4">
-            <div>
-              {{message.message}}
-              <br />
-              <span v-if="message.pot">Pot Available: {{message.pot}}</span>
+        <div v-if="isActivityFeeds" id="msg-card-body" class="card-body" style="  display: flex;
+  flex-direction: column-reverse;
+">
+          <div>
+            <div
+                v-for="(message, key) in room.messages"
+                :key="key"
+                class="d-flex justify-content-start mb-4">
+              <div>
+                {{message.message}}
+                <br />
+                <span v-if="message.pot">Pot Available: {{message.pot}}</span>
+              </div>
             </div>
+
           </div>
         </div>
 
@@ -62,7 +67,7 @@
                 v-model="bet"
             />
             <span class="col-12 mt-2" v-text="bet"></span>
-            <button :class="{'disabled': user.currentChips === 0 }" type="button" class="mt-3 btn btn-block btn-success" @click="addPot">Bet</button>
+            <button :class="{'disabled': user.currentChips === 0 || bet === 0 }" type="button" class="mt-3 btn btn-block btn-success" @click="addPot">Bet</button>
           </div>
 
           <div id="card-take" class="input-group" style="justify-content: center" v-if="isTake">
@@ -73,7 +78,7 @@
                 v-model="take"
             />
             <span class="col-12 mt-2" v-text="take"></span>
-            <button :class="{'disabled': room.pot === 0 }" type="button" class="mt-3 btn btn-block btn-success" @click="takePot">Take</button>
+            <button :class="{'disabled': room.pot === 0 || take === 0 }" type="button" class="mt-3 btn btn-block btn-success" @click="takePot">Take</button>
           </div>
 
 
@@ -126,7 +131,7 @@ export default {
         currentChips: 0,
       },
       room: {
-        uri: "",
+        uri: this.$route.params["uri"],
         messages: [],
         pot: 0,
       },
@@ -194,10 +199,9 @@ export default {
     },
     initiateRoom() {
       if(this.getCookie("session")) {
-        axios.get("http://localhost:8080/api/room/get", {
+        axios.get("http://localhost:8080/api/room/get/" + this.room.uri, {
           withCredentials: true
         }).then(res => {
-          this.room.uri = res.data.data.uri;
           this.records = res.data.data.record;
           this.room.pot = res.data.data.pot;
           this.connectToWebsocket();
@@ -210,7 +214,7 @@ export default {
     },
     getLatestRecords() {
       if(this.getCookie("session")) {
-        axios.get("http://localhost:8080/api/room/get", {
+        axios.get("http://localhost:8080/api/room/get/" + this.room.uri, {
           withCredentials: true
         }).then(res => {
           this.isActivityFeeds = false;
